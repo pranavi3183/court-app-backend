@@ -1,43 +1,18 @@
-CREATE TABLE IF NOT EXISTS courts (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    type TEXT NOT NULL
+-- Add per-court equipment table
+CREATE TABLE IF NOT EXISTS equipment_per_court (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  courtId INTEGER NOT NULL,
+  name TEXT NOT NULL,    -- 'racket' or 'shoes'
+  total INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY(courtId) REFERENCES courts(id)
 );
 
-CREATE TABLE IF NOT EXISTS coaches (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    isAvailable INTEGER DEFAULT 1
-);
+-- Example seeds (run once) - adjust courtId & totals as needed:
+INSERT INTO equipment_per_court (courtId, name, total) VALUES (1, 'racket', 6);
+INSERT INTO equipment_per_court (courtId, name, total) VALUES (1, 'shoes', 6);
 
-CREATE TABLE IF NOT EXISTS equipment (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT NOT NULL,
-    total INTEGER NOT NULL
-);
+INSERT INTO equipment_per_court (courtId, name, total) VALUES (2, 'racket', 6);
+INSERT INTO equipment_per_court (courtId, name, total) VALUES (2, 'shoes', 6);
 
-CREATE TABLE IF NOT EXISTS bookings (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    userName TEXT,
-    courtId INTEGER,
-    coachId INTEGER,
-    rackets INTEGER DEFAULT 0,
-    shoes INTEGER DEFAULT 0,
-    startTime TEXT,
-    endTime TEXT,
-    price REAL DEFAULT 0,
-    status TEXT DEFAULT 'confirmed',
-
-    FOREIGN KEY (courtId) REFERENCES courts(id),
-    FOREIGN KEY (coachId) REFERENCES coaches(id)
-);
-
-CREATE TABLE IF NOT EXISTS pricing_rules (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    name TEXT,
-    type TEXT,
-    value REAL,
-    startHour INTEGER,
-    endHour INTEGER,
-    dayOfWeek INTEGER
-);
+INSERT INTO equipment_per_court (courtId, name, total) VALUES (3, 'racket', 6);
+INSERT INTO equipment_per_court (courtId, name, total) VALUES (3, 'shoes', 6);

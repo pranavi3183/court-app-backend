@@ -8,32 +8,47 @@ export const getBookings = (req, res) => {
 };
 
 export const createBooking = (req, res) => {
-    const { userName, courtId, coachId, rackets, shoes, startTime, endTime } = req.body;
+  const { userName, courtId, coachId, rackets, shoes, startTime, endTime } = req.body;
+  // ensure ISO strings
+  const start = new Date(startTime).toISOString();
+  const end = new Date(endTime).toISOString();
 
-    // 1. Check Availability
-    const available = isAvailable(courtId, coachId, rackets, startTime, endTime);
-    if (!available.ok) return res.status(400).json({ error: available.message });
+  const insertTx = db.transaction((payload) => {
+    const check = isAvailable(payload.courtId, payload.coachId, payload.rackets, payload.shoes, payload.startTime, payload.endTime);
+    if (!check.ok) throw new Error(check.message);
 
-    // 2. Pricing
-    const price = calculatePrice(startTime, courtId);
+    const price = calculatePrice(payload.startTime, payload.courtId);
 
-    // 3. Save booking
     const stmt = db.prepare(`
-        INSERT INTO bookings 
-        (userName, courtId, coachId, rackets, shoes, startTime, endTime, price)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      INSERT INTO bookings 
+      (userName, courtId, coachId, rackets, shoes, startTime, endTime, price)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
-
-    const result = stmt.run(
-        userName,
-        courtId,
-        coachId || null,
-        rackets,
-        shoes,
-        startTime,
-        endTime,
-        price
+    const info = stmt.run(
+      payload.userName,
+      payload.courtId,
+      payload.coachId || null,
+      payload.rackets || 0,
+      payload.shoes || 0,
+      payload.startTime,
+      payload.endTime,
+      price
     );
+    return { id: info.lastInsertRowid, price };
+  });
 
-    res.json({ id: result.lastInsertRowid, price });
+  try {
+    const out = insertTx({
+      userName,
+      courtId: Number(courtId),
+      coachId: coachId ? Number(coachId) : null,
+      rackets: Number(rackets || 0),
+      shoes: Number(shoes || 0),
+      startTime: start,
+      endTime: end
+    });
+    return res.json(out);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
 };
